@@ -1,5 +1,6 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const { Toolkit } = require('actions-toolkit')
 
 try {
     const time = (new Date()).toTimeString();
