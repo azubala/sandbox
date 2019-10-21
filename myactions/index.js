@@ -1,6 +1,7 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 const { Toolkit } = require('actions-toolkit')
+const request = require('request');
 
 try {
     const pullRequest = github.context.payload["pull_request"];
@@ -29,36 +30,42 @@ try {
     parsedTCs.forEach(function(testCase) {
         Toolkit.run(async tools => {
 
-        const title = `[TC for PR #${prNumber}] ${testCase.name}`;
-        const body = `Related PR: ${prLink}\n\n${testCase.link}`;
+            const title = `[TC for PR #${prNumber}] ${testCase.name}`;
+            var body = `- Related PR: ${prLink}\n- Test Case link: ${testCase.link}\n---\n`;
 
-        const templated = {
-            body: body,
-            title: title
-        }
-
-        tools.log.debug('Templates compiled', templated)
-        tools.log.info(`Creating new issue ${templated.title}`)
-
-        // Create the new issue
-        try {
-            const issue = await tools.github.issues.create({
-                ...tools.context.repo,
-                ...templated,
-                assignees: [],
-                labels: ["test-case"]
-            })
-            tools.log.success(`Created issue ${issue.data.title}#${issue.data.number}: ${issue.data.html_url}`)
-        } catch (err) {
-            // Log the error message
-            tools.log.error(`An error occurred while creating the issue. This might be caused by a malformed issue title, or a typo in the labels or assignees!`)
-            tools.log.error(err)
-
-            // The error might have more details
-            if (err.errors) tools.log.error(err.errors)
-                // Exit with a failing status
-                tools.exit.failure()
+            const templated = {
+                body: body,
+                title: title
             }
+
+            tools.log.debug('Templates compiled', templated)
+            tools.log.info(`Creating new issue ${templated.title}`)
+
+            request.get(testCase.link, function (error, response, response) {
+                if (!error && response.statusCode == 200) {        
+                    body += response;
+                } else {
+                    body += 'Failed to fetch TC body :('
+                }                
+                try {
+                    const issue = await tools.github.issues.create({
+                        ...tools.context.repo,
+                        ...templated,
+                        assignees: [],
+                        labels: ["test-case"]
+                    })
+                    tools.log.success(`Created issue ${issue.data.title}#${issue.data.number}: ${issue.data.html_url}`)
+                } catch (err) {
+                    // Log the error message
+                    tools.log.error(`An error occurred while creating the issue. This might be caused by a malformed issue title, or a typo in the labels or assignees!`)
+                    tools.log.error(err)
+
+                    // The error might have more details
+                    if (err.errors) tools.log.error(err.errors)
+                        // Exit with a failing status
+                        tools.exit.failure()
+                    }
+                });        
         }, {
             secrets: ['GITHUB_TOKEN']
         });
