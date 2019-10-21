@@ -3,16 +3,18 @@ const github = require('@actions/github');
 const { Toolkit } = require('actions-toolkit')
 const request = require('request');
 
-try {
-    const pullRequest = github.context.payload["pull_request"];
 
-    // const payload = JSON.stringify(pullRequest, undefined, 2)
-    // console.log(`The PR: \n\n${payload}\n\n`);
+async function getTestCaseBody(url) {
+  return new Promise((resolve, reject) => {
+    request({ url, method: 'GET' }, (error, response, body) => {
+      if (error) return reject(error)
 
-    const body = pullRequest["body"];
-    const prLink = pullRequest["html_url"];
-    const prNumber = pullRequest["number"];
+      return resolve({ body, response })
+    })
+  })
+}
 
+async function praseTestCases(body) {
     let tcRegexp = /- \[ \] run TC\s+\[(?<filename>[\w\.\/\-]+)\]\((?<link>[\w\:\/\-\.]+)\)/;
     var parsedTCs = [];
 
@@ -22,31 +24,30 @@ try {
         let match = line.match(tcRegexp);
         if (match != null) {
             let groups = match.groups;
-            let testCase = {name: groups.filename, link: groups.link};
+            let { response, body } = await getTestCaseBody(groups.link);
+            let testCase = {name: groups.filename, link: groups.link, body: body};
             parsedTCs.push(testCase);
         }
     }
 
-    parsedTCs.forEach(function(testCase) {
-        Toolkit.run(async tools => {
+}
 
-            const title = `[TC for PR #${prNumber}] ${testCase.name}`;
-            var body = `- Related PR: ${prLink}\n- Test Case link: ${testCase.link}\n---\n`;
+async function createIssues(parsedTCs, prNumber, prLink) {
+    try {
+        parsedTCs.forEach(function(testCase) {
+            Toolkit.run(async tools => {
 
-            const templated = {
-                body: body,
-                title: title
-            }
+                const title = `[TC for PR #${prNumber}] ${testCase.name}`;
+                var body = `- Related PR: ${prLink}\n- Test Case link: ${testCase.link}\n---\n${testCase.body}`;
 
-            tools.log.debug('Templates compiled', templated)
-            tools.log.info(`Creating new issue ${templated.title}`)
+                const templated = {
+                    body: body,
+                    title: title
+                }
 
-            request.get(testCase.link, function (error, response, response) {
-                if (!error && response.statusCode == 200) {        
-                    body += response;
-                } else {
-                    body += 'Failed to fetch TC body :('
-                }                
+                tools.log.debug('Templates compiled', templated)
+                tools.log.info(`Creating new issue ${templated.title}`)
+
                 try {
                     const issue = await tools.github.issues.create({
                         ...tools.context.repo,
@@ -64,13 +65,25 @@ try {
                     if (err.errors) tools.log.error(err.errors)
                         // Exit with a failing status
                         tools.exit.failure()
-                    }
-                });        
-        }, {
-            secrets: ['GITHUB_TOKEN']
+                }
+            }, {
+                secrets: ['GITHUB_TOKEN']
+            });
         });
-    });
 
-} catch (error) {
-      core.setFailed(error.message);
+    } catch (error) {
+          core.setFailed(error.message);
+    }
 }
+
+const pullRequest = github.context.payload["pull_request"];
+
+// const payload = JSON.stringify(pullRequest, undefined, 2)
+// console.log(`The PR: \n\n${payload}\n\n`);
+
+const body = pullRequest["body"];
+const prLink = pullRequest["html_url"];
+const prNumber = pullRequest["number"];
+
+var parsedTCs = praseTestCases(body);
+createIssues(parsedTCs, prNumber, prLink);
