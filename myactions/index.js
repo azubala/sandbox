@@ -30,7 +30,7 @@ try {
         Toolkit.run(async tools => {
 
         const title = `[TC for PR #${prNumber}] ${testCase.name}`;
-        const body = `Related PR: ${testCase.link}\n\n${testCase.link}`;
+        const body = `Related PR: ${prLink}\n\n${testCase.link}`;
 
         const templated = {
             body: body,
