@@ -3,15 +3,12 @@ const github = require('@actions/github');
 const { Toolkit } = require('actions-toolkit')
 
 try {
-    const time = (new Date()).toTimeString();
-    core.setOutput("time", time);
-
     const pullRequest = github.context.payload["pull_request"];
+
+    const payload = JSON.stringify(pullRequest, undefined, 2)
+    console.log(`The PR: \n\n${pullRequest}\n\n`);
+
     const body = pullRequest["body"];
-
-    console.log(`The PR body: ${body}`);
-
-    console.log(`The PR: ${pullRequest}`);
 
     let tcRegexp = /- \[ \] run TC\s+\[(?<filename>[\w\.\/\-]+)\]\((?<link>[\w\:\/\-\.]+)\)/;
     var parsedTCs = [];
@@ -28,37 +25,37 @@ try {
     }
 
     parsedTCs.forEach(function(testCase) {
-        Toolkit.run(async tools => {          
-          const templated = {
+        Toolkit.run(async tools => {
+
+        const templated = {
             body: testCase.link,
             title: "TC: " + testCase.name
-          }
+        }
 
-          tools.log.debug('Templates compiled', templated)
-          tools.log.info(`Creating new issue ${templated.title}`)
+        tools.log.debug('Templates compiled', templated)
+        tools.log.info(`Creating new issue ${templated.title}`)
 
-          // Create the new issue
-          try {
+        // Create the new issue
+        try {
             const issue = await tools.github.issues.create({
-              ...tools.context.repo,
-              ...templated,
-              assignees: [],
-              labels: ["test-case"]              
+                ...tools.context.repo,
+                ...templated,
+                assignees: [],
+                labels: ["test-case"]
             })
             tools.log.success(`Created issue ${issue.data.title}#${issue.data.number}: ${issue.data.html_url}`)
-          } catch (err) {
+        } catch (err) {
             // Log the error message
             tools.log.error(`An error occurred while creating the issue. This might be caused by a malformed issue title, or a typo in the labels or assignees!`)
             tools.log.error(err)
 
             // The error might have more details
             if (err.errors) tools.log.error(err.errors)
-
-            // Exit with a failing status
-            tools.exit.failure()
-          }
+                // Exit with a failing status
+                tools.exit.failure()
+            }
         }, {
-          secrets: ['GITHUB_TOKEN']
+            secrets: ['GITHUB_TOKEN']
         });
     });
 

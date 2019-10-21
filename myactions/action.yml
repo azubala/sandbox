@@ -1,8 +1,5 @@
-name: 'Hello World'
-description: 'Greet someone and record the time'
-outputs:
-  time: # id of output
-    description: 'The time we greeted you'
+name: 'Test Case to Issue'
+description: 'Add referenced Test Cases as GitHub Issues'
 runs:
   using: 'node12'
   main: 'index.js'
