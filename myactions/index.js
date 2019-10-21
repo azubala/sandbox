@@ -6,7 +6,7 @@ try {
     const pullRequest = github.context.payload["pull_request"];
 
     const payload = JSON.stringify(pullRequest, undefined, 2)
-    console.log(`The PR: \n\n${pullRequest}\n\n`);
+    console.log(`The PR: \n\n${payload}\n\n`);
 
     const body = pullRequest["body"];
 
