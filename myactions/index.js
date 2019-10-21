@@ -10,6 +10,24 @@ try {
 
     console.log(`The PR body: ${body}`);
 
+    
+    let dateRegexp = /- \[ \] run TC\s+\[(?<filename>[\w\.\/\-]+)\]\((?<link>[\w\:\/\-\.]+)\)/;
+    var parsedTCs = [];
+
+    var lines = body.split('\n');
+    for(var i = 0;i < lines.length; i++){
+        var line = lines[i];
+        let match = line.match(dateRegexp);
+        if (match != null) {
+            let groups = match.groups;
+            let testCase = {name: groups.filename, link: groups.link};
+            parsedTCs.push(testCase);
+        }
+    }
+
+    parsedTCs.forEach(function(testCase) {
+        console.log(testCase);
+    });    
 
 
 } catch (error) {
