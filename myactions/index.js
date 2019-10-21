@@ -85,8 +85,6 @@ const body = pullRequest["body"];
 const prLink = pullRequest["html_url"];
 const prNumber = pullRequest["number"];
 
-var parsedTCs = praseTestCases(body);
-
-console.log(parsedTCs);
-
-// createIssues(parsedTCs, prNumber, prLink);
+praseTestCases(body).then(function(result) {
+    createIssues(result, prNumber, prLink);
+});
