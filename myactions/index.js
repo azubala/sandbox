@@ -11,6 +11,8 @@ try {
 
     console.log(`The PR body: ${body}`);
 
+    console.log(`The PR: ${pullRequest}`);
+
     let tcRegexp = /- \[ \] run TC\s+\[(?<filename>[\w\.\/\-]+)\]\((?<link>[\w\:\/\-\.]+)\)/;
     var parsedTCs = [];
 
