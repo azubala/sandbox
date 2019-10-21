@@ -41,8 +41,7 @@ try {
               ...tools.context.repo,
               ...templated,
               assignees: [],
-              labels: [],
-              milestone: []
+              labels: []              
             })
             tools.log.success(`Created issue ${issue.data.title}#${issue.data.number}: ${issue.data.html_url}`)
           } catch (err) {
