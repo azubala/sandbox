@@ -1,20 +1,20 @@
 name: Main Workflow
 
-on: [push]
+on:
+  pull_request:
+    types: [opened, edited]
 
 jobs:
-  hello_world_job:
+  add_test_cases:
     runs-on: macOS-latest
-    name: A job to say hello
-    steps:
-      # To use this repository's private action, you must check out the repository
+    name: A job to add Test Cases issues linked to the PR
+    steps:      
       - name: Checkout
         uses: actions/checkout@v1
-      - name: Hello world action step
-        uses: ./myactions # Uses an action in the root directory
-        id: hello
+      - name: Add TC Issues from PR
+        uses: ./myactions
+        id: add_tc_issues
         with:
-          who-to-greet: 'Mona the Octocat'
-      # Use the output from the `hello` step
+          who-to-greet: 'Mona the Octocat'      
       - name: Get the output time
-        run: echo "The time was ${{ steps.hello.outputs.time }}"
+        run: echo "The time was ${{ steps.add_tc_issues.outputs.time }}"
