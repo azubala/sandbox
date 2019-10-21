@@ -29,7 +29,7 @@ async function praseTestCases(body) {
             parsedTCs.push(testCase);
         }
     }
-
+    return parsedTCs;
 }
 
 async function createIssues(parsedTCs, prNumber, prLink) {
