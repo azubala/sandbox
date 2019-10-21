@@ -5,10 +5,12 @@ const { Toolkit } = require('actions-toolkit')
 try {
     const pullRequest = github.context.payload["pull_request"];
 
-    const payload = JSON.stringify(pullRequest, undefined, 2)
-    console.log(`The PR: \n\n${payload}\n\n`);
+    // const payload = JSON.stringify(pullRequest, undefined, 2)
+    // console.log(`The PR: \n\n${payload}\n\n`);
 
     const body = pullRequest["body"];
+    const prLink = pullRequest["html_url"];
+    const prNumber = pullRequest["number"];
 
     let tcRegexp = /- \[ \] run TC\s+\[(?<filename>[\w\.\/\-]+)\]\((?<link>[\w\:\/\-\.]+)\)/;
     var parsedTCs = [];
@@ -27,9 +29,12 @@ try {
     parsedTCs.forEach(function(testCase) {
         Toolkit.run(async tools => {
 
+        const title = `[TC for PR #${prNumber}] ${testCase.name}`;
+        const body = `Related PR: ${testCase.link}\n\n${testCase.link}`;
+
         const templated = {
-            body: testCase.link,
-            title: "TC: " + testCase.name
+            body: body,
+            title: title
         }
 
         tools.log.debug('Templates compiled', templated)
